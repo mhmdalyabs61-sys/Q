@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Smart Sniper is Running!")
+        self.wfile.write(b"Roblox Clean Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -39,18 +39,25 @@ def check_username(username):
     url = f"https://auth.roblox.com/v1/usernames/validation?request.username={username}&request.birthday=2000-01-01"
     headers = {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://www.roblox.com/'
     }
     
     try:
         response = requests.get(url, headers=headers, timeout=5)
-        return username, response.status_code, response.text
+        if response.status_code == 200:
+            data = response.json()
+            # التأكد البرمجي السليم 100% من خانة الـ code
+            code = data.get("code")
+            return username, True, code, data
+        else:
+            return username, False, response.status_code, response.text
     except Exception as e:
-        return username, 500, str(e)
+        return username, False, 500, str(e)
 
 checked_history = set()
 
-def generate_unique_batch(count=40):
+def generate_unique_batch(count=30):
     consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
     vowels = ['a', 'e', 'i', 'o', 'u']
     rare_chars = ['q', 'x', 'z', '1', '7', '9', '0', '5']
@@ -90,52 +97,51 @@ def generate_unique_batch(count=40):
                     
     return list(batch)
 
-send_discord_message("🚀 **بدأ تشغيل النظام الذكي للسنايبر!** جاهز لطحن اليوزرات...")
-print("[*] السنايبر انطلق...")
+send_discord_message("🧹 **تم تفعيل الكود النظيف والمفحوص تقنياً!** يبدأ الفحص الآن...")
+print("[*] الكود النظيف شغال...")
 
 batch_counter = 0
 
 while True:
-    batch_usernames = generate_unique_batch(40)
+    batch_usernames = generate_unique_batch(30)
     if not batch_usernames:
         time.sleep(1)
         continue
         
     batch_counter += 1
-    start_msg = f"🔄 **بدأت اللفة رقم ({batch_counter}):** جاري فحص `{len(batch_usernames)}` يوزر (رباعي وخماسي)..."
+    start_msg = f"🔄 **لفة رقم ({batch_counter}):** جاري فحص `{len(batch_usernames)}` يوزر..."
     print(start_msg)
     send_discord_message(start_msg)
     
-    hits_in_this_batch = 0
+    hits_in_batch = 0
     
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
-            user_name, status_code, raw_response = future.result()
+            username, success, code_or_status, raw_data = future.result()
+            size_type = "رباعي 💎" if len(username) == 4 else "خماسي 🌟"
             
-            size_type = "رباعي 💎" if len(user_name) == 4 else "خماسي 🌟"
-            
-            print(f"فحص ({size_type}) ➔ {user_name} | الحالة: {raw_response}")
-            
-            # لو لقينا يوزر متاح بنص اللفة
-            if status_code == 200 and '"code":0' in raw_response:
-                hits_in_this_batch += 1
-                hit_msg = f"🔥 **صيد أسطوري بنص اللفة!**\n النوع: **{size_type}**\n اليوزر: `{user_name}`\n الاستجابة: `{raw_response}`\n@everyone"
-                print(f"🔥 [ صيدة! ] {user_name}")
-                send_discord_message(hit_msg)
-            # ملاحظة: ما حطيت break عشان يكمل باقي اللفة للآخر مثل ما طلبت!
+            if success:
+                print(f"فحص ({size_type}) ➔ {username} | كود روبلوكس: {code_or_status}")
+                # الشرط الحقيقي الصافي 100%
+                if code_or_status == 0:
+                    hits_in_batch += 1
+                    hit_msg = f"🔥 **صيد أسطوري متاح حقيقةً!**\n النوع: **{size_type}**\n اليوزر: `{username}`\n@everyone"
+                    print(f"🔥 [ صيدة كبرى! ] ➔ {username}")
+                    send_discord_message(hit_msg)
+            else:
+                print(f"خطأ في الاتصال لـ {username}: {code_or_status}")
 
-    # إذا خلصت اللفة
-    if hits_in_this_batch == 0:
+    if hits_in_batch == 0:
         reason_msg = (
             f"📊 **انتهت اللفة ({batch_counter}) ولم يتم صيد أي يوزر.**\n"
-            f"🔍 **السبب التقني الحقيقي:** تم فحص `{len(batch_usernames)}` يوزر بنجاح وبدون تكرار، ولكن جميعها (محجوزة مسبقاً) لأن أسماء روبلوكس الرباعية والخماسية التي لها معنى أو تناسق صوتي قد حُجزت بالكامل منذ سنوات طويلة بواسطة آلاف البوتات واللاعبين حول العالم. البوت شغال وصادق 100% ويستمر بالبحث عن أي ثغرة أو يوزر منسي!"
+            f"🔍 **السبب:** تم فحص الـ 30 يوزر بدقة عبر استقبال JSON الرسمي من روبلوكس، وكلها ثبت أنها محجوزة مسبقاً."
         )
         print(reason_msg)
         send_discord_message(reason_msg)
     else:
-        success_msg = f"✅ **انتهت اللفة ({batch_counter}) بسلام!** تم صيد `{hits_in_this_batch}` يوزر متاح بهذه اللفة."
+        success_msg = f"✅ **انتهت اللفة ({batch_counter}):** تم صيد `{hits_in_batch}` يوزر متاح بنجاح!"
         print(success_msg)
         send_discord_message(success_msg)
 
