@@ -33,8 +33,30 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. كود الفحص والصيد مع التنسيق المطلوب في الطباعة
+# 2. إعدادات الفحص وصيد روبلوكس
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1561938766317486110/gcHtpPCx0AwOc94a61F9_TAcR8PUxwLr73bWofwswLSTYU4DHj1NkW3LITq11oeVeraH"
+
+def send_discord_notification(username):
+    """إرسال اليوزر المتاح إلى ديسكورد فور صيده"""
+    payload = {
+        "content": f"🔥 **صيد جديد ومتاح!**\n`{username}`\n@everyone"
+    }
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        DISCORD_WEBHOOK_URL,
+        data=data,
+        headers={
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0'
+        },
+        method='POST'
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            pass
+    except Exception:
+        pass
 
 def check_username(username):
     params = urllib.parse.urlencode({
@@ -68,7 +90,7 @@ def generate_unique_usernames(count):
 
 # الإعدادات الآمنة والسرعة الموزونة
 batch_size = 50 
-print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد...")
+print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد وإرسال التنبيهات للديسكورد...")
 
 while True:
     usernames = generate_unique_usernames(batch_size)
@@ -81,8 +103,11 @@ while True:
             user, is_available = future.result()
             if is_available:
                 print(f"[-] فحص: {user} (مأخوذ)                                   🔥 [ متاح ومصيد! ] ➔  {user}")
+                # حفظ محلياً في Render
                 with open("found.txt", "a", encoding="utf-8") as f:
                     f.write(user + "\n")
+                # إرسال إلى ديسكورد فوراً
+                send_discord_notification(user)
             else:
                 print(f"[-] فحص: {user} (مأخوذ)")
 
