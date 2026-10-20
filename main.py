@@ -25,8 +25,8 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص والويب هوك
-API_URL = "https://auth.roblox.com/v1/usernames/validation"
+# 2. إعدادات الفحص المحدثة (رابط التحقق الجديد والنظيف)
+API_URL = "https://users.roblox.com/v1/usernames/users"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1562019919128698990/doPV-DBGiDRIsIq-e-y7hrRH8sgpwr58nN4USQJ8254JW5HuNHngz8AwCke-FgptzNjg"
 
 def send_discord_message(msg):
@@ -36,25 +36,28 @@ def send_discord_message(msg):
         pass
 
 def check_username(username):
-    params = {
-        'request.username': username,
-        'request.birthday': '2000-01-01'
+    # استخدام الـ API البديل المحدث للبحث عن اليوزرات
+    payload = {
+        "usernames": [username],
+        "excludeBannedUsers": True
     }
     headers = {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
     
     try:
-        response = requests.get(API_URL, params=params, headers=headers, timeout=3)
+        response = requests.post(API_URL, json=payload, headers=headers, timeout=3)
         if response.status_code == 200:
             data = response.json()
-            code_val = data.get('code')
-            if code_val == 0:
+            # إذا رجع الـ data فاضي أو القائمة فاضية، معناه اليوزر غير مسجل (متاح!)
+            users_list = data.get('data', [])
+            if len(users_list) == 0:
                 return username, True, "متاح ورسمياً فاضي! 🔥"
             else:
-                return username, False, f"مأخوذ (Code: {code_val})"
+                return username, False, "مأخوذ"
         else:
-            return username, False, f"خطأ من الموقع: {response.status_code}"
+            return username, False, f"خطأ HTTP: {response.status_code}"
     except Exception:
         return username, False, "خطأ اتصال"
 
@@ -74,29 +77,27 @@ def generate_smart_usernames(count):
             
     return list(unique_set)
 
-send_discord_message("🟢 **تم تشغيل البوت بنجاح!** بدأ فحص الأنماط الذكية...")
-print("[*] البوت بدأ يشتغل...")
+send_discord_message("🟢 **تم تحديث البوت وإصلاح خطأ 404!** جاري استئناف الفحص...")
+print("[*] البوت شغال بالرابط الجديد...")
 
 total_checked = 0
 
 while True:
-    # نولد دفعة من 20 يوزر ونكررها الين نوصل 100
     batch_usernames = generate_smart_usernames(20)
     
     for user in batch_usernames:
         user_name, is_available, details = check_username(user)
         total_checked += 1
-        print(f"[{total_checked}] فحص اليوزر: {user_name} ➔ الرد: {details}")
+        print(f"[{total_checked}] يوزر: {user_name} ➔ الحالة: {details}")
         
         if is_available:
             print(f"🔥 [ صيدة خرافية متاحة! ] ➔ {user_name}")
             send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user_name}`\n@everyone")
         
-        time.sleep(0.5)  # سرعة أسرع شوي وبشكل آمن
+        time.sleep(0.5)
 
-    # إذا وصل الفحص 100 يوزر أو أكثر، يرسل تقرير للديسكورد
     if total_checked >= 100:
-        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر حتى الآن... البوت شغال ومستمر 🔄")
-        total_checked = 0  # نرجع نعد من جديد
+        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بنجاح... البوت شغال بدون أخطاء 🔄")
+        total_checked = 0
 
     time.sleep(2)
