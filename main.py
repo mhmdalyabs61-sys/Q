@@ -25,7 +25,7 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص المحدثة (رابط التحقق الجديد والنظيف)
+# 2. إعدادات الفحص
 API_URL = "https://users.roblox.com/v1/usernames/users"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1562019919128698990/doPV-DBGiDRIsIq-e-y7hrRH8sgpwr58nN4USQJ8254JW5HuNHngz8AwCke-FgptzNjg"
 
@@ -36,7 +36,6 @@ def send_discord_message(msg):
         pass
 
 def check_username(username):
-    # استخدام الـ API البديل المحدث للبحث عن اليوزرات
     payload = {
         "usernames": [username],
         "excludeBannedUsers": True
@@ -50,7 +49,6 @@ def check_username(username):
         response = requests.post(API_URL, json=payload, headers=headers, timeout=3)
         if response.status_code == 200:
             data = response.json()
-            # إذا رجع الـ data فاضي أو القائمة فاضية، معناه اليوزر غير مسجل (متاح!)
             users_list = data.get('data', [])
             if len(users_list) == 0:
                 return username, True, "متاح ورسمياً فاضي! 🔥"
@@ -62,42 +60,26 @@ def check_username(username):
         return username, False, "خطأ اتصال"
 
 def generate_smart_usernames(count):
+    """توليد يوزرات منوعة (رباعية وخماسية) بأساليب ذكية"""
     chars = string.ascii_lowercase + string.digits
     unique_set = set()
     
     while len(unique_set) < count:
-        mode = random.choice([1, 2])
+        # اختيار عشوائي بين الأنماط (رباعي أو خماسي)
+        mode = random.choice([1, 2, 3, 4])
+        
         if mode == 1:
-            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "_" + "".join(random.choices(chars, k=1))
-        else:
+            # نمط رباعي: 3 حروف مع رقم (مثل abc1)
+            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "".join(random.choices(string.digits, k=1))
+        elif mode == 2:
+            # نمط رباعي: حرفين مع شرطة ورقم (مثل ab_1)
+            uname = "".join(random.choices(string.ascii_lowercase, k=2)) + "_" + "".join(random.choices(chars, k=1))
+        elif mode == 3:
+            # نمط خماسي: 4 حروف مع رقم (مثل abcd1)
             uname = "".join(random.choices(string.ascii_lowercase, k=4)) + "".join(random.choices(string.digits, k=1))
+        else:
+            # نمط خماسي: 3 حروف مع شرطة وحرف (مثل abc_d)
+            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "_" + "".join(random.choices(chars, k=1))
             
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
-            unique_set.add(uname)
-            
-    return list(unique_set)
-
-send_discord_message("🟢 **تم تحديث البوت وإصلاح خطأ 404!** جاري استئناف الفحص...")
-print("[*] البوت شغال بالرابط الجديد...")
-
-total_checked = 0
-
-while True:
-    batch_usernames = generate_smart_usernames(20)
-    
-    for user in batch_usernames:
-        user_name, is_available, details = check_username(user)
-        total_checked += 1
-        print(f"[{total_checked}] يوزر: {user_name} ➔ الحالة: {details}")
-        
-        if is_available:
-            print(f"🔥 [ صيدة خرافية متاحة! ] ➔ {user_name}")
-            send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user_name}`\n@everyone")
-        
-        time.sleep(0.5)
-
-    if total_checked >= 100:
-        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بنجاح... البوت شغال بدون أخطاء 🔄")
-        total_checked = 0
-
-    time.sleep(2)
+            unique_set.add(uname
