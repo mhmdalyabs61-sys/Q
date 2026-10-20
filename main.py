@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Anti-Duplicate Sniper is Running!")
+        self.wfile.write(b"Roblox Instant Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -44,21 +44,13 @@ def check_username(username):
     
     try:
         response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("code") == 0:
-                return username, True, "متاح حقيقي 100% 🔥"
-            else:
-                return username, False, "مأخوذ أو محجوز"
-        else:
-            return username, False, f"خطأ HTTP: {response.status_code}"
-    except Exception:
-        return username, False, "خطأ اتصال"
+        return username, response.status_code, response.text
+    except Exception as e:
+        return username, 500, str(e)
 
-# ذاكرة مؤقتة لمنع تكرار أي يوزر تم فحصه نهائياً
 checked_history = set()
 
-def generate_unique_batch(count=100):
+def generate_unique_batch(count=40):
     consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
     vowels = ['a', 'e', 'i', 'o', 'u']
     rare_chars = ['q', 'x', 'z', '1', '7', '9', '0', '5']
@@ -69,7 +61,7 @@ def generate_unique_batch(count=100):
     while len(batch) < count and attempts < count * 10:
         attempts += 1
         length = random.choice([4, 5])
-        use_underscore = random.choice([True, False, False]) # تقليل نسبة الشرطة السفلية عشان تصير أضبط
+        use_underscore = random.choice([True, False])
         
         if length == 4:
             if use_underscore:
@@ -90,7 +82,6 @@ def generate_unique_batch(count=100):
                 
         uname = uname.lower().strip()
         
-        # شروط النظافة وعدم التكرار
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             if len(uname) in [4, 5]:
                 if uname not in checked_history:
@@ -99,34 +90,40 @@ def generate_unique_batch(count=100):
                     
     return list(batch)
 
-send_discord_message("🛡️ **تم تحديث البوت بنظام (منع التكرار الجذري)!** بدأ فحص يوزرات جديدة كلياً...")
-print("[*] البوت شغال الآن ويضمن عدم فحص أي يوزر مرتين...")
+send_discord_message("⚡ **تم تفعيل البوت (الفحص الفوري المباشر):** يبث الحالات أول بأول...")
+print("[*] البوت شغال الآن ويرسل كل شي فوراً...")
 
 total_checked = 0
 
 while True:
-    batch_usernames = generate_unique_batch(100)
+    batch_usernames = generate_unique_batch(40)
     if not batch_usernames:
         time.sleep(1)
         continue
         
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    found_hit = False
+    with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
             total_checked += 1
-            user_name, is_available, details = future.result()
+            user_name, status_code, raw_response = future.result()
             
-            size_type = "رباعي 💎" if len(user_name) == 4 else "خماسي 🌟"
+            # طباعة الإرسال باللوغز
+            print(f"[{total_checked}] يوزر: {user_name} | الحالة: {raw_response}")
             
-            print(f"[{total_checked}] ({size_type}) يوزر: {user_name} ➔ الحالة: {details}")
+            # إرسال حالة الفحص للديسكورد (اختياري، لو تبيه يرسل كل شي أو فقط الصيد. هنا يرسل الملخص للروم)
+            # send_discord_message(f"فحص: `{user_name}` ➔ `{raw_response}`")
             
-            if is_available:
-                print(f"🔥 [ صيدة حقيقية نارية! ] ({size_type}) ➔ {user_name}")
-                send_discord_message(f"🔥 **صيد أسطوري ومتاح حقيقةً!**\n نوعه: **{size_type}**\n اليوزر: `{user_name}`\n@everyone")
+            # التحقق لو اليوزر متاح فعلاً
+            if status_code == 200 and '"code":0' in raw_response:
+                found_hit = True
+                print(f"🔥 [ صيدة حقيقية فوريّة! ] ➔ {user_name}")
+                send_discord_message(f"🔥 **صيد أسطوري ومتاح حقيقةً!**\n اليوزر: `{user_name}`\n الاستجابة: `{raw_response}`\n@everyone")
+                break # أول ما يلقى صيدة يطلع من اللفة فوراً بدون ما يكمل الباقي
 
-    if total_checked >= 300:
-        send_discord_message(f"📊 **تقرير أداء:** تم فحص `{total_checked}` يوزر جديد كلياً بدون تكرار... ومستمرين ⚡")
-        total_checked = 0
-
-    time.sleep(0.3)
+    if found_hit:
+        # لو صاد يوزر يقدر يرتاح شوي أو يكمل فوراً
+        time.sleep(1)
+    else:
+        time.sleep(0.3)
