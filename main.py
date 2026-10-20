@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Fast Sniper is Running!")
+        self.wfile.write(b"Roblox Smart Wordlist Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -55,52 +55,69 @@ def check_username(username):
     except Exception:
         return username, False, "خطأ اتصال"
 
-def generate_smart_usernames(count):
-    chars = string.ascii_lowercase + string.digits
+def generate_wordlist_usernames(count):
+    # مقاطع ذكية وكلمات قصيرة تساعد في صيد يوزرات تنقري وتجي مرتبة
+    prefixes = ["zen", "vex", "vyn", "lox", "kox", "nex", "rix", "vex", "zix", "flux", "core", "vibe", "apex", "echo", "nova", "xor", "ion", "lux"]
+    suffixes = ["ai", "ix", "ox", "ex", "z", "x", "q", "9", "7", "5", "1"]
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
+    
     unique_set = set()
     
     while len(unique_set) < count:
-        mode = random.choice([1, 2, 3, 4])
+        choice = random.choice([1, 2, 3, 4])
         
-        if mode == 1:
-            uname = "".join(random.choices(string.ascii_lowercase, k=4))
-        elif mode == 2:
-            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "".join(random.choices(string.digits, k=1))
-        elif mode == 3:
-            uname = "".join(random.choices(string.ascii_lowercase, k=4)) + "".join(random.choices(string.digits, k=1))
+        if choice == 1:
+            # رباعي مرتب (حرف علة بالنص)
+            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(string.ascii_lowercase)
+        elif choice == 2:
+            # خماسي مرتب
+            uname = random.choice(prefixes)
+            if len(uname) > 5:
+                uname = uname[:5]
+            elif len(uname) < 5:
+                uname += random.choice(string.ascii_lowercase)
+        elif choice == 3:
+            # رباعي مع رقم أو حرف مميز
+            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + random.choice(string.digits)
         else:
-            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "_" + "".join(random.choices(chars, k=1))
+            # خماسي بدمج مقطع مع حرف وشرطة سفلية خفيفة
+            uname = random.choice(consonants) + random.choice(vowels) + "_" + "".join(random.choices(string.ascii_lowercase, k=2))
             
+        # تنظيف والتأكد من الطول والشروط
+        uname = uname.lower().strip()
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
-            unique_set.add(uname)
-            
+            if len(uname) in [4, 5]:
+                unique_set.add(uname)
+                
     return list(unique_set)
 
-send_discord_message("⚡ **تم تشغيل وضع السرعة العالية (Multithreading)!** البوت يطير الآن...")
-print("[*] البوت شغال بالسرعة القصوى والمضمونة...")
+send_discord_message("🎯 **تم تفعيل وضع (الدمج الذكي للكلمات والمقاطع)!** البوت يستهدف الرباعي والخماسي المرتب...")
+print("[*] البوت شغال بنظام الدمج الذكي للرباعي والخماسي...")
 
 total_checked = 0
 
 while True:
-    # نولد دفعة أسرع وأكبر (مثلاً 50 يوزر دفعة وحدة)
-    batch_usernames = generate_smart_usernames(50)
+    batch_usernames = generate_wordlist_usernames(40)
     
-    # استخدام ThreadPoolExecutor لفحص 10 يوزرات بنفس الثانية
     with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
             total_checked += 1
             user_name, is_available, details = future.result()
-            print(f"[{total_checked}] يوزر: {user_name} ➔ الحالة: {details}")
+            
+            # تحديد هل هو رباعي أو خماسي حسب الطول
+            size_type = "رباعي 💎" if len(user_name) == 4 else "خماسي 🌟"
+            
+            print(f"[{total_checked}] ({size_type}) يوزر: {user_name} ➔ الحالة: {details}")
             
             if is_available:
-                print(f"🔥 [ صيدة حقيقية ونظيفة! ] ➔ {user_name}")
-                send_discord_message(f"🔥 **صيد جديد ومتاح حقيقةً!**\n`{user_name}`\n@everyone")
+                print(f"🔥 [ صيدة حقيقية ونظيفة! ] ({size_type}) ➔ {user_name}")
+                send_discord_message(f"🔥 **صيد جديد ومتاح حقيقةً!**\n نوعه: **{size_type}**\n اليوزر: `{user_name}`\n@everyone")
 
-    if total_checked >= 150:
-        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بسرعة عالية... البوت شغال 🚀")
+    if total_checked >= 120:
+        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بذكاء... البوت شغال 🔄")
         total_checked = 0
 
-    # راحة بسيطة جداً بين الدفعات عشان ما يلقطنا السيرفر
     time.sleep(1)
