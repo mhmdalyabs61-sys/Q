@@ -51,8 +51,19 @@ def check_username(username):
         if response.status_code == 200:
             data = response.json()
             users_list = data.get('data', [])
+            
+            # إذا القائمة فاضية، يعني مبدئياً مو مسجل بحساب عادي
             if len(users_list) == 0:
-                return username, True, "متاح ورسمياً فاضي! 🔥"
+                # فحص إضافي للتأكد أن اليوزر مو محظور أو مرفوض من النظام (تحسباً للردود الوهمية)
+                check_url = f"https://auth.roblox.com/v1/usernames/validation?request.username={username}&request.birthday=2000-01-01"
+                val_res = requests.get(check_url, headers=headers, timeout=5)
+                if val_res.status_code == 200:
+                    val_data = val_res.json()
+                    # الرمز 0 يعني اليوزر صالح ومتاح 100% وغير مخالف
+                    if val_data.get("code") == 0:
+                        return username, True, "متاح حقيقي ونظيف! 🔥"
+                
+                return username, False, "مخالف أو محجوز (وهمي)"
             else:
                 return username, False, "مأخوذ"
         else:
@@ -68,9 +79,9 @@ def generate_smart_usernames(count):
         mode = random.choice([1, 2, 3, 4])
         
         if mode == 1:
-            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "".join(random.choices(string.digits, k=1))
+            uname = "".join(random.choices(string.ascii_lowercase, k=4))
         elif mode == 2:
-            uname = "".join(random.choices(string.ascii_lowercase, k=2)) + "_" + "".join(random.choices(chars, k=1))
+            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "".join(random.choices(string.digits, k=1))
         elif mode == 3:
             uname = "".join(random.choices(string.ascii_lowercase, k=4)) + "".join(random.choices(string.digits, k=1))
         else:
@@ -81,8 +92,8 @@ def generate_smart_usernames(count):
             
     return list(unique_set)
 
-send_discord_message("🟢 **تم إصلاح الخطأ وتشغيل البوت بنجاح!** جاري فحص اليوزرات...")
-print("[*] البوت شغال وسليم 100%...")
+send_discord_message("🟢 **تم تحديث البوت وإضافة فحص التحقق الدقيق!** تم إلغاء الصيدات الوهمية...")
+print("[*] البوت شغال بالفحص الحقيقي...")
 
 total_checked = 0
 
@@ -95,13 +106,14 @@ while True:
         print(f"[{total_checked}] يوزر: {user_name} ➔ الحالة: {details}")
         
         if is_available:
-            print(f"🔥 [ صيدة خرافية متاحة! ] ➔ {user_name}")
-            send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user_name}`\n@everyone")
+            print(f"🔥 [ صيدة حقيقية ونظيفة متاحة! ] ➔ {user_name}")
+            send_discord_message(f"🔥 **صيد جديد ومتاح رسمياً!**\n`{user_name}`\n@everyone")
         
-        time.sleep(0.6)
+        # زيادة الفاصل الزمني شوي عشان نتجنب الحظر (Rate Limit) ويعطي نتائج دقيقة
+        time.sleep(1.0)
 
     if total_checked >= 100:
-        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بنجاح... البوت شغال 🔄")
+        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بدقة... البوت شغال 🔄")
         total_checked = 0
 
     time.sleep(2)
