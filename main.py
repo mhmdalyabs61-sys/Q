@@ -8,13 +8,13 @@ from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 1. سيرفر ويب وهمي لمنع نوم السيرفر
+# 1. سيرفر ويب وهمي لمنع نوم السيرفر على Render
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Sniper is Running!")
+        self.wfile.write(b"Roblox Turbo Sniper is Running!")
 
     def do_HEAD(self):
         self.send_response(200)
@@ -32,12 +32,12 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص والتنبيهات
+# 2. إعدادات الفحص وتنبيهات ديسكورد (نفس الروم المحدد)
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1561938766317486110/gcHtpPCx0AwOc94a61F9_TAcR8PUxwLr73bWofwswLSTYU4DHj1NkW3LITq11oeVeraH"
 
 def send_discord_message(msg):
-    """إرسال رسالة إلى ديسكورد"""
+    """إرسال رسالة إلى نفس روم ديسكورد"""
     payload = {"content": msg}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
@@ -64,7 +64,7 @@ def check_username(username):
     )
     
     try:
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=2.5) as response:
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 if data.get('code') == 0:
@@ -73,26 +73,37 @@ def check_username(username):
         pass
     return username, False
 
-def generate_unique_usernames(count):
-    chars = string.ascii_lowercase + string.digits + "_"
+def generate_targeted_usernames(count):
+    """توليد يوزرات بأنماط ذكية وسريعة الصيد"""
+    chars = string.ascii_lowercase + string.digits
     unique_set = set()
+    
     while len(unique_set) < count:
-        uname = "".join(random.choices(chars, k=4))
+        mode = random.choice([1, 2, 3])
+        if mode == 1:
+            uname = "".join(random.choices(string.ascii_lowercase, k=2)) + "".join(random.choices(string.digits, k=2))
+        elif mode == 2:
+            uname = "".join(random.choices(string.ascii_lowercase, k=1)) + "".join(random.choices(chars, k=2)) + "_"
+        else:
+            uname = "".join(random.choices(chars, k=4))
+            
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             unique_set.add(uname)
+            
     return list(unique_set)
 
-batch_size = 50 
+# إعدادات السرعة القصوى الآمنة
+batch_size = 100 
+max_threads = 25
 total_checked = 0
 
-# إرسال تنبيه في ديسكورد أول ما يشتغل البوت
-send_discord_message("🟢 **تم تشغيل البوت بنجاح!** جاري بدء فحص اليوزرات الرباعية 24/7...")
-print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد...")
+send_discord_message("⚡ **تم تفعيل وضع السرعة القصوى (Turbo Mode)!** البوت يطحن الآن بأقصى قوة...")
+print("[*] تم تفعيل الوضع السريع...")
 
 while True:
-    usernames = generate_unique_usernames(batch_size)
+    usernames = generate_targeted_usernames(batch_size)
     
-    with ThreadPoolExecutor(max_workers=12) as executor:
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
         futures = {executor.submit(check_username, user): user for user in usernames}
         
         for future in as_completed(futures):
@@ -105,8 +116,8 @@ while True:
             else:
                 print(f"[-] فحص: {user} (مأخوذ)")
 
-    # إرسال إشعار في ديسكورد كل 2000 يوزر يفحصهم عشان تتأكد إنه شغال
+    # تحديث الحالة في ديسكورد كل 2000 فحص (تصير تجيك الرسالة أسرع بكثير الحين)
     if total_checked % 2000 == 0:
-        send_discord_message(f"⚙️ **تحديث حالة:** البوت شغال وتم فحص `{total_checked}` يوزر حتى الآن وما زال البحث مستمراً...")
+        send_discord_message(f"⚙️ **تحديث السرعة:** فحص البوت حتى الآن `{total_checked}` يوزر وما زال البحث شغال بالفل سبييد...")
 
-    time.sleep(1.5)
+    time.sleep(0.3)
