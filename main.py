@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Clean Sniper is Running!")
+        self.wfile.write(b"Roblox Pure Random Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -47,9 +47,7 @@ def check_username(username):
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            # التأكد البرمجي السليم 100% من خانة الـ code
-            code = data.get("code")
-            return username, True, code, data
+            return username, True, data.get("code"), data
         else:
             return username, False, response.status_code, response.text
     except Exception as e:
@@ -57,38 +55,21 @@ def check_username(username):
 
 checked_history = set()
 
-def generate_unique_batch(count=30):
-    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
-    vowels = ['a', 'e', 'i', 'o', 'u']
-    rare_chars = ['q', 'x', 'z', '1', '7', '9', '0', '5']
-    
+def generate_pure_random_batch(count=40):
+    # الحروف والأرقام والشرطة المتاحة في روبلوكس
+    chars_pool = string.ascii_lowercase + string.digits + "_"
     batch = set()
     attempts = 0
     
-    while len(batch) < count and attempts < count * 10:
+    while len(batch) < count and attempts < count * 15:
         attempts += 1
-        length = random.choice([4, 5])
-        use_underscore = random.choice([True, False])
+        length = random.choice([4, 5]) # رباعي أو خماسي فقط
         
-        if length == 4:
-            if use_underscore:
-                pos = random.choice([1, 2])
-                chars = random.choices(string.ascii_lowercase + string.digits, k=3)
-                chars.insert(pos, '_')
-                uname = "".join(chars)
-            else:
-                uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(rare_chars)
-        else:
-            if use_underscore:
-                pos = random.choice([1, 2, 3])
-                chars = random.choices(string.ascii_lowercase + string.digits, k=4)
-                chars.insert(pos, '_')
-                uname = "".join(chars)
-            else:
-                uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + "".join(random.choices(string.ascii_lowercase, k=2))
-                
+        # توليد عشوائي بحت
+        uname = "".join(random.choices(chars_pool, k=length))
         uname = uname.lower().strip()
         
+        # شروط روبلوكس الأساسية جداً (لا تبدأ أو تنتهي بشرطة، ولا تكرر الشرطات وراء بعض)
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             if len(uname) in [4, 5]:
                 if uname not in checked_history:
@@ -97,52 +78,45 @@ def generate_unique_batch(count=30):
                     
     return list(batch)
 
-send_discord_message("🧹 **تم تفعيل الكود النظيف والمفحوص تقنياً!** يبدأ الفحص الآن...")
-print("[*] الكود النظيف شغال...")
+send_discord_message("🎲 **تم تفعيل العشوائية البحتة (أي رباعي أو خماسي)!** البوت انطلق...")
+print("[*] البوت شغال عشوائي بحت...")
 
 batch_counter = 0
 
 while True:
-    batch_usernames = generate_unique_batch(30)
+    batch_usernames = generate_pure_random_batch(40)
     if not batch_usernames:
         time.sleep(1)
         continue
         
     batch_counter += 1
-    start_msg = f"🔄 **لفة رقم ({batch_counter}):** جاري فحص `{len(batch_usernames)}` يوزر..."
+    start_msg = f"🔄 **لفة عشوائية ({batch_counter}):** جاري فحص `{len(batch_usernames)}` يوزر (رباعي/خماسي)..."
     print(start_msg)
     send_discord_message(start_msg)
     
     hits_in_batch = 0
     
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
-            username, success, code_or_status, raw_data = future.result()
+            username, success, code, raw_data = future.result()
             size_type = "رباعي 💎" if len(username) == 4 else "خماسي 🌟"
             
             if success:
-                print(f"فحص ({size_type}) ➔ {username} | كود روبلوكس: {code_or_status}")
-                # الشرط الحقيقي الصافي 100%
-                if code_or_status == 0:
+                print(f"فحص ({size_type}) ➔ {username} | كود: {code}")
+                # الصيد الحقيقي المتاح
+                if code == 0:
                     hits_in_batch += 1
                     hit_msg = f"🔥 **صيد أسطوري متاح حقيقةً!**\n النوع: **{size_type}**\n اليوزر: `{username}`\n@everyone"
                     print(f"🔥 [ صيدة كبرى! ] ➔ {username}")
                     send_discord_message(hit_msg)
             else:
-                print(f"خطأ في الاتصال لـ {username}: {code_or_status}")
+                print(f"خطأ اتصال لـ {username}")
 
     if hits_in_batch == 0:
-        reason_msg = (
-            f"📊 **انتهت اللفة ({batch_counter}) ولم يتم صيد أي يوزر.**\n"
-            f"🔍 **السبب:** تم فحص الـ 30 يوزر بدقة عبر استقبال JSON الرسمي من روبلوكس، وكلها ثبت أنها محجوزة مسبقاً."
-        )
-        print(reason_msg)
-        send_discord_message(reason_msg)
+        print(f"📊 انتهت اللفة ({batch_counter})، جاري الانتقال للفة اللي بعدها...")
     else:
-        success_msg = f"✅ **انتهت اللفة ({batch_counter}):** تم صيد `{hits_in_batch}` يوزر متاح بنجاح!"
-        print(success_msg)
-        send_discord_message(success_msg)
+        print(f"✅ انتهت اللفة ({batch_counter}) وتم صيد {hits_in_batch} يوزر!")
 
-    time.sleep(2)
+    time.sleep(1)
