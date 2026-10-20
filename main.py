@@ -42,11 +42,12 @@ def check_username(username):
     }
     headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
     
     try:
-        response = requests.post(API_URL, json=payload, headers=headers, timeout=3)
+        response = requests.post(API_URL, json=payload, headers=headers, timeout=5)
         if response.status_code == 200:
             data = response.json()
             users_list = data.get('data', [])
@@ -60,26 +61,47 @@ def check_username(username):
         return username, False, "خطأ اتصال"
 
 def generate_smart_usernames(count):
-    """توليد يوزرات منوعة (رباعية وخماسية) بأساليب ذكية"""
     chars = string.ascii_lowercase + string.digits
     unique_set = set()
     
     while len(unique_set) < count:
-        # اختيار عشوائي بين الأنماط (رباعي أو خماسي)
         mode = random.choice([1, 2, 3, 4])
         
         if mode == 1:
-            # نمط رباعي: 3 حروف مع رقم (مثل abc1)
             uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "".join(random.choices(string.digits, k=1))
         elif mode == 2:
-            # نمط رباعي: حرفين مع شرطة ورقم (مثل ab_1)
             uname = "".join(random.choices(string.ascii_lowercase, k=2)) + "_" + "".join(random.choices(chars, k=1))
         elif mode == 3:
-            # نمط خماسي: 4 حروف مع رقم (مثل abcd1)
             uname = "".join(random.choices(string.ascii_lowercase, k=4)) + "".join(random.choices(string.digits, k=1))
         else:
-            # نمط خماسي: 3 حروف مع شرطة وحرف (مثل abc_d)
             uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "_" + "".join(random.choices(chars, k=1))
             
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
-            unique_set.add(uname
+            unique_set.add(uname)
+            
+    return list(unique_set)
+
+send_discord_message("🟢 **تم إصلاح الخطأ وتشغيل البوت بنجاح!** جاري فحص اليوزرات...")
+print("[*] البوت شغال وسليم 100%...")
+
+total_checked = 0
+
+while True:
+    batch_usernames = generate_smart_usernames(20)
+    
+    for user in batch_usernames:
+        user_name, is_available, details = check_username(user)
+        total_checked += 1
+        print(f"[{total_checked}] يوزر: {user_name} ➔ الحالة: {details}")
+        
+        if is_available:
+            print(f"🔥 [ صيدة خرافية متاحة! ] ➔ {user_name}")
+            send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user_name}`\n@everyone")
+        
+        time.sleep(0.6)
+
+    if total_checked >= 100:
+        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بنجاح... البوت شغال 🔄")
+        total_checked = 0
+
+    time.sleep(2)
