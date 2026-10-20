@@ -4,8 +4,27 @@ import urllib.parse
 import random
 import string
 import time
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# 1. سيرفر ويب وهمي عشان Render يوافق يشغله مجاناً بدون فلوس
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Roblox Sniper is Running!")
+
+def run_web_server():
+    server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
+    server.serve_forever()
+
+# تشغيل سيرفر الويب في الخلفية
+t = Thread(target=run_web_server)
+t.daemon = True
+t.start()
+
+# 2. كود فحص روبلوكس (الصعد والسريع)
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
 
 def check_username(username):
@@ -39,9 +58,7 @@ def generate_unique_usernames(count):
     return list(unique_set)
 
 batch_size = 250
-attempt_round = 1
-
-print("[*] البوت شغال صامت الآن.. يفر ويحفظ الصيد وبس!")
+print("[*] البوت والسيرفر اشتغلو بنجاح!")
 
 while True:
     usernames = generate_unique_usernames(batch_size)
@@ -52,10 +69,8 @@ while True:
         for future in as_completed(futures):
             user, is_available = future.result()
             if is_available:
-                # يطبع بس إذا لقى صيد!
                 print(f"\n🔥 [صيد متاح!]: {user}")
                 with open("found.txt", "a", encoding="utf-8") as f:
                     f.write(user + "\n")
 
-    attempt_round += 1
     time.sleep(1)
