@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Smart Wordlist Sniper is Running!")
+        self.wfile.write(b"Roblox Ultra-Smart Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -55,69 +55,69 @@ def check_username(username):
     except Exception:
         return username, False, "خطأ اتصال"
 
-def generate_wordlist_usernames(count):
-    # مقاطع ذكية وكلمات قصيرة تساعد في صيد يوزرات تنقري وتجي مرتبة
-    prefixes = ["zen", "vex", "vyn", "lox", "kox", "nex", "rix", "vex", "zix", "flux", "core", "vibe", "apex", "echo", "nova", "xor", "ion", "lux"]
-    suffixes = ["ai", "ix", "ox", "ex", "z", "x", "q", "9", "7", "5", "1"]
-    vowels = ['a', 'e', 'i', 'o', 'u']
-    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
+def generate_ultra_smart_usernames(count):
+    # مقاطع لغوية وتقنية حديثة وقصيرة جداً (تطلع أسامي فخمة ونادرة)
+    roots = ["syn", "flux", "xyn", "vyn", "kox", "zex", "nex", "rix", "vex", "zix", "ion", "lux", "nox", "dex", "kyn", "ryn", "nyx", "aux"]
+    modifiers = ["ai", "ix", "ox", "ex", "ed", "un", "ov", "az", "uz"]
     
     unique_set = set()
     
     while len(unique_set) < count:
-        choice = random.choice([1, 2, 3, 4])
+        pattern = random.choice([1, 2, 3, 4, 5])
         
-        if choice == 1:
-            # رباعي مرتب (حرف علة بالنص)
-            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(string.ascii_lowercase)
-        elif choice == 2:
-            # خماسي مرتب
-            uname = random.choice(prefixes)
-            if len(uname) > 5:
-                uname = uname[:5]
-            elif len(uname) < 5:
-                uname += random.choice(string.ascii_lowercase)
-        elif choice == 3:
-            # رباعي مع رقم أو حرف مميز
-            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + random.choice(string.digits)
+        if pattern == 1:
+            # دمج جذور تقنية مع حروف علة ذكية (خماسي فخم)
+            uname = random.choice(roots) + random.choice(['y', 'i', 'o', 'x'])
+        elif pattern == 2:
+            # رباعي بتنسيق صوتي حديث (صامت + علة + صامت + حرف نادر)
+            c1 = random.choice(['s', 'v', 'k', 'z', 'm', 'r', 'n', 'f', 't', 'd'])
+            v1 = random.choice(['a', 'e', 'i', 'o', 'u'])
+            c2 = random.choice(['x', 'q', 'z', 'k', 'v', 'n'])
+            end_c = random.choice(string.ascii_lowercase)
+            uname = c1 + v1 + c2 + end_c
+        elif pattern == 3:
+            # ثلاثي فخم مضاف له حرف خفيف بالبداية والنهاية (خماسي)
+            uname = random.choice(string.ascii_lowercase) + "".join(random.choices(string.ascii_lowercase, k=3)) + random.choice(string.ascii_lowercase)
+        elif pattern == 4:
+            # مقطع حديث مع رقم مميز ونظيف
+            uname = random.choice(roots)[:3] + random.choice(['1', '7', '9', 'x', 'z'])
         else:
-            # خماسي بدمج مقطع مع حرف وشرطة سفلية خفيفة
-            uname = random.choice(consonants) + random.choice(vowels) + "_" + "".join(random.choices(string.ascii_lowercase, k=2))
+            # دمج مقطعين قصيرين جداً (رباعي أو خماسي)
+            uname = random.choice(roots)[:2] + random.choice(modifiers)
             
-        # تنظيف والتأكد من الطول والشروط
         uname = uname.lower().strip()
+        # شروط نظافة روبلوكس الأساسية
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             if len(uname) in [4, 5]:
                 unique_set.add(uname)
                 
     return list(unique_set)
 
-send_discord_message("🎯 **تم تفعيل وضع (الدمج الذكي للكلمات والمقاطع)!** البوت يستهدف الرباعي والخماسي المرتب...")
-print("[*] البوت شغال بنظام الدمج الذكي للرباعي والخماسي...")
+send_discord_message("🧠 **تم تفعيل وضع (الذكاء الخارق والصيد المخفي)!** البوت يبحث بطرق لا تتوقعها...")
+print("[*] البوت شغال بنظام التوليد الذكي والمتقدم جداً...")
 
 total_checked = 0
 
 while True:
-    batch_usernames = generate_wordlist_usernames(40)
+    batch_usernames = generate_ultra_smart_usernames(60)
     
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
             total_checked += 1
             user_name, is_available, details = future.result()
             
-            # تحديد هل هو رباعي أو خماسي حسب الطول
             size_type = "رباعي 💎" if len(user_name) == 4 else "خماسي 🌟"
             
             print(f"[{total_checked}] ({size_type}) يوزر: {user_name} ➔ الحالة: {details}")
             
             if is_available:
-                print(f"🔥 [ صيدة حقيقية ونظيفة! ] ({size_type}) ➔ {user_name}")
-                send_discord_message(f"🔥 **صيد جديد ومتاح حقيقةً!**\n نوعه: **{size_type}**\n اليوزر: `{user_name}`\n@everyone")
+                print(f"🔥 [ صيدة تاريخية ونظيفة! ] ({size_type}) ➔ {user_name}")
+                send_discord_message(f"🔥 **صيد أسطوري ومتاح حقيقةً!**\n نوعه: **{size_type}**\n اليوزر: `{user_name}`\n@everyone")
 
-    if total_checked >= 120:
-        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر بذكاء... البوت شغال 🔄")
+    if total_checked >= 180:
+        send_discord_message(f"📊 **تقرير ذكي:** تم فحص `{total_checked}` يوزر بنجاح... البوت مستمر بالبحث 🚀")
         total_checked = 0
 
-    time.sleep(1)
+    time.sleep(0.8)
