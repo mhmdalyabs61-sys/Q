@@ -14,7 +14,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Turbo Sniper is Running!")
+        self.wfile.write(b"Roblox Debug Sniper is Running!")
 
     def do_HEAD(self):
         self.send_response(200)
@@ -32,12 +32,11 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص وتنبيهات ديسكورد (نفس الروم المحدد)
+# 2. إعدادات الفحص
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1561938766317486110/gcHtpPCx0AwOc94a61F9_TAcR8PUxwLr73bWofwswLSTYU4DHj1NkW3LITq11oeVeraH"
 
 def send_discord_message(msg):
-    """إرسال رسالة إلى نفس روم ديسكورد"""
     payload = {"content": msg}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
@@ -60,21 +59,30 @@ def check_username(username):
     url = f"{API_URL}?{params}"
     req = urllib.request.Request(
         url,
-        headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)'}
+        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     )
     
     try:
-        with urllib.request.urlopen(req, timeout=2.5) as response:
-            if response.status == 200:
-                data = json.loads(response.read().decode())
-                if data.get('code') == 0:
-                    return username, True
-    except Exception:
-        pass
-    return username, False
+        with urllib.request.urlopen(req, timeout=3) as response:
+            status_code = response.status
+            body = response.read().decode()
+            data = json.loads(body)
+            
+            # طباعة الرد الحقيقي عشان نشوف وش تبي روبلوكس
+            code_val = data.get('code')
+            message_val = data.get('message', '')
+            
+            if code_val == 0:
+                return username, True, f"تاح! (Code: 0)"
+            else:
+                return username, False, f"مأخوذ/مرفوض (Code: {code_val}, Msg: {message_val})"
+                
+    except urllib.error.HTTPError as e:
+        return username, False, f"خطأ HTTP: {e.code}"
+    except Exception as e:
+        return username, False, f"خطأ اتصال:ريست/تأخير"
 
 def generate_targeted_usernames(count):
-    """توليد يوزرات بأنماط ذكية وسريعة الصيد"""
     chars = string.ascii_lowercase + string.digits
     unique_set = set()
     
@@ -92,32 +100,27 @@ def generate_targeted_usernames(count):
             
     return list(unique_set)
 
-# إعدادات السرعة القصوى الآمنة
-batch_size = 100 
-max_threads = 25
+batch_size = 20 # خفضناها مؤقتاً عشان نراقب اللوغز بوضوح
+max_threads = 5
 total_checked = 0
 
-send_discord_message("⚡ **تم تفعيل وضع السرعة القصوى (Turbo Mode)!** البوت يطحن الآن بأقصى قوة...")
-print("[*] تم تفعيل الوضع السريع...")
+send_discord_message("🔍 **بدء وضع الفحص التجريبي (Debug Mode)** لكشف استجابات روبلوكس الحقيقية...")
+print("[*] بدأ البطء الفاحص للمراقبة...")
 
 while True:
     usernames = generate_targeted_usernames(batch_size)
     
-    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+    with ThreadPoolExecutor(max_threads) as executor:
         futures = {executor.submit(check_username, user): user for user in usernames}
         
         for future in as_completed(futures):
-            user, is_available = future.result()
+            user, is_available, details = future.result()
             total_checked += 1
             
+            print(f"[{total_checked}] يوزر: {user} ➔ الرد: {details}")
+            
             if is_available:
-                print(f"🔥 [ متاح ومصيد! ] ➔  {user}")
+                print(f"🔥 [ صيدة تاريخية متاحة! ] ➔ {user}")
                 send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user}`\n@everyone")
-            else:
-                print(f"[-] فحص: {user} (مأخوذ)")
 
-    # تحديث الحالة في ديسكورد كل 2000 فحص (تصير تجيك الرسالة أسرع بكثير الحين)
-    if total_checked % 2000 == 0:
-        send_discord_message(f"⚙️ **تحديث السرعة:** فحص البوت حتى الآن `{total_checked}` يوزر وما زال البحث شغال بالفل سبييد...")
-
-    time.sleep(0.3)
+    time.sleep(2) # مهلة بسيطة عشان نقدر نقرا اللوغز صح بدون عجلة
