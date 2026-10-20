@@ -4,7 +4,6 @@ import string
 import time
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
 # 1. سيرفر ويب وهمي لمنع نوم السيرفر على Render
@@ -13,7 +12,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Requests Sniper is Running!")
+        self.wfile.write(b"Roblox Smart Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -26,9 +25,9 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص
+# 2. إعدادات الفحص والويب هوك
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1561938766317486110/gcHtpPCx0AwOc94a61F9_TAcR8PUxwLr73bWofwswLSTYU4DHj1NkW3LITq11oeVeraH"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1562019919128698990/doPV-DBGiDRIsIq-e-y7hrRH8sgpwr58nN4USQJ8254JW5HuNHngz8AwCke-FgptzNjg"
 
 def send_discord_message(msg):
     try:
@@ -41,7 +40,9 @@ def check_username(username):
         'request.username': username,
         'request.birthday': '2000-01-01'
     }
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
+    }
     
     try:
         response = requests.get(API_URL, params=params, headers=headers, timeout=3)
@@ -49,53 +50,53 @@ def check_username(username):
             data = response.json()
             code_val = data.get('code')
             if code_val == 0:
-                return username, True, "متاح ورسمياً فاضي!"
+                return username, True, "متاح ورسمياً فاضي! 🔥"
             else:
                 return username, False, f"مأخوذ (Code: {code_val})"
         else:
-            return username, False, f"خطأ HTTP: {response.status_code}"
-    except Exception as e:
-        return username, False, "خطأ اتصال / Timeout"
+            return username, False, f"خطأ من الموقع: {response.status_code}"
+    except Exception:
+        return username, False, "خطأ اتصال"
 
-def generate_targeted_usernames(count):
+def generate_smart_usernames(count):
     chars = string.ascii_lowercase + string.digits
     unique_set = set()
     
     while len(unique_set) < count:
-        mode = random.choice([1, 2, 3])
+        mode = random.choice([1, 2])
         if mode == 1:
-            uname = "".join(random.choices(string.ascii_lowercase, k=2)) + "".join(random.choices(string.digits, k=2))
-        elif mode == 2:
-            uname = "".join(random.choices(string.ascii_lowercase, k=1)) + "".join(random.choices(chars, k=2)) + "_"
+            uname = "".join(random.choices(string.ascii_lowercase, k=3)) + "_" + "".join(random.choices(chars, k=1))
         else:
-            uname = "".join(random.choices(chars, k=4))
+            uname = "".join(random.choices(string.ascii_lowercase, k=4)) + "".join(random.choices(string.digits, k=1))
             
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             unique_set.add(uname)
             
     return list(unique_set)
 
-batch_size = 15
-max_threads = 5
+send_discord_message("🟢 **تم تشغيل البوت بنجاح!** بدأ فحص الأنماط الذكية...")
+print("[*] البوت بدأ يشتغل...")
+
 total_checked = 0
 
-send_discord_message("🚀 **تم تشغيل البوت بمكتبة Requests المستقرة!** جاري فحص الردود...")
-print("[*] البوت بدأ يشتغل ويفحص الفعلي...")
-
 while True:
-    usernames = generate_targeted_usernames(batch_size)
+    # نولد دفعة من 20 يوزر ونكررها الين نوصل 100
+    batch_usernames = generate_smart_usernames(20)
     
-    with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        futures = {executor.submit(check_username, user): user for user in usernames}
+    for user in batch_usernames:
+        user_name, is_available, details = check_username(user)
+        total_checked += 1
+        print(f"[{total_checked}] فحص اليوزر: {user_name} ➔ الرد: {details}")
         
-        for future in as_completed(futures):
-            user, is_available, details = future.result()
-            total_checked += 1
-            
-            print(f"[{total_checked}] يوزر: {user} ➔ الحالة: {details}")
-            
-            if is_available:
-                print(f"🔥 [ صيدة تاريخية متاحة! ] ➔ {user}")
-                send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user}`\n@everyone")
+        if is_available:
+            print(f"🔥 [ صيدة خرافية متاحة! ] ➔ {user_name}")
+            send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user_name}`\n@everyone")
+        
+        time.sleep(0.5)  # سرعة أسرع شوي وبشكل آمن
 
-    time.sleep(1)
+    # إذا وصل الفحص 100 يوزر أو أكثر، يرسل تقرير للديسكورد
+    if total_checked >= 100:
+        send_discord_message(f"📊 **تقرير دوري:** تم فحص `{total_checked}` يوزر حتى الآن... البوت شغال ومستمر 🔄")
+        total_checked = 0  # نرجع نعد من جديد
+
+    time.sleep(2)
