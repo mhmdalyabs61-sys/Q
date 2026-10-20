@@ -1,4 +1,4 @@
-جimport json
+import json
 import random
 import string
 import time
@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Beast Sniper is Running!")
+        self.wfile.write(b"Roblox Flexible Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -56,7 +56,6 @@ def check_username(username):
         return username, False, "خطأ اتصال"
 
 def generate_beast_usernames(count):
-    # حروف علة وصوامت وحروف نادرة لدمج هجين يولد أسامي جديدة كلياً
     consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
     vowels = ['a', 'e', 'i', 'o', 'u']
     rare_chars = ['q', 'x', 'z', '1', '7', '9']
@@ -64,37 +63,50 @@ def generate_beast_usernames(count):
     unique_set = set()
     
     while len(unique_set) < count:
-        choice = random.choice([1, 2, 3])
+        length = random.choice([4, 5])
         
-        if choice == 1:
-            # رباعي هجين (صامت + علة + صامت + حرف نادر)
-            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(rare_chars)
-        elif choice == 2:
-            # خماسي هجين (مقطع صوتي + حرفين عشوائيين نظيفين)
-            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + "".join(random.choices(string.ascii_lowercase, k=2))
+        # اختيار عشوائي: هل نحط شرطة سفلية بهذا اليوزر ولا لا؟ (احتمال 50% كذا أو كذا)
+        use_underscore = random.choice([True, False])
+        
+        if length == 4:
+            if use_underscore:
+                # يوزر رباعي مع شرطة سفلية عشوائية (تضمن عدم وجودها بالبداية والنهاية أو تكرارها)
+                pos = random.choice([1, 2]) # مكان الشرطة السفلية
+                chars = random.choices(string.ascii_lowercase + string.digits, k=3)
+                chars.insert(pos, '_')
+                uname = "".join(chars)
+            else:
+                # يوزر رباعي صافي بدون شرطة
+                uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(rare_chars)
         else:
-            # رباعي أو خماسي بحروف متسلسلة خفيفة
-            length = random.choice([4, 5])
-            uname = "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
+            if use_underscore:
+                # يوزر خماسي مع شرطة سفلية بأسلوب مرن
+                pos = random.choice([1, 2, 3])
+                chars = random.choices(string.ascii_lowercase + string.digits, k=4)
+                chars.insert(pos, '_')
+                uname = "".join(chars)
+            else:
+                # يوزر خماسي صافي بدون شرطة
+                uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + "".join(random.choices(string.ascii_lowercase, k=2))
             
         uname = uname.lower().strip()
         
-        # شروط النظافة الأساسية لروبلوكس
+        # شروط نظافة روبلوكس الأساسية
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             if len(uname) in [4, 5]:
                 unique_set.add(uname)
                 
     return list(unique_set)
 
-send_discord_message("🚀 **تم إطلاق وضع (Beast Sniper المهووس)!** بدأ طحن اليوزرات الحقيقية...")
-print("[*] البوت شغال الآن بالطريقة الهجينة الجديدة...")
+send_discord_message("🚀 **تم تفعيل وضع (المرونة الكاملة - بـشرطة وبدون شرطة)!** البوت شغال يطحن اليوزرات...")
+print("[*] البوت شغال الآن بتوليد مرن (مرة بحط _ ومرة بدون)...")
 
 total_checked = 0
 
 while True:
-    batch_usernames = generate_beast_usernames(80) # ضخ 80 يوزر بكل دفعة
+    batch_usernames = generate_beast_usernames(80)
     
-    with ThreadPoolExecutor(max_workers=15) as executor: # رفع السرعة إلى 15 مسار
+    with ThreadPoolExecutor(max_workers=15) as executor:
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
