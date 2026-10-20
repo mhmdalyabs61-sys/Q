@@ -8,7 +8,7 @@ from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 1. سيرفر ويب وهمي لمنع نوم السيرفر ودعم طلبات GET و HEAD
+# 1. سيرفر ويب وهمي لمنع نوم السيرفر
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -22,38 +22,32 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def log_message(self, format, *args):
-        pass  # منع زحمة السجلات بطلبات الويب المتكررة
+        pass
 
 def run_web_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
     server.serve_forever()
 
-# تشغيل سيرفر الويب في الخلفية
 t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات الفحص وصيد روبلوكس
+# 2. إعدادات الفحص والتنبيهات
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1561938766317486110/gcHtpPCx0AwOc94a61F9_TAcR8PUxwLr73bWofwswLSTYU4DHj1NkW3LITq11oeVeraH"
 
-def send_discord_notification(username):
-    """إرسال اليوزر المتاح إلى ديسكورد فور صيده"""
-    payload = {
-        "content": f"🔥 **صيد جديد ومتاح!**\n`{username}`\n@everyone"
-    }
+def send_discord_message(msg):
+    """إرسال رسالة إلى ديسكورد"""
+    payload = {"content": msg}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
         DISCORD_WEBHOOK_URL,
         data=data,
-        headers={
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0'
-        },
+        headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'},
         method='POST'
     )
     try:
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=5):
             pass
     except Exception:
         pass
@@ -88,27 +82,31 @@ def generate_unique_usernames(count):
             unique_set.add(uname)
     return list(unique_set)
 
-# الإعدادات الآمنة والسرعة الموزونة
 batch_size = 50 
-print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد وإرسال التنبيهات للديسكورد...")
+total_checked = 0
+
+# إرسال تنبيه في ديسكورد أول ما يشتغل البوت
+send_discord_message("🟢 **تم تشغيل البوت بنجاح!** جاري بدء فحص اليوزرات الرباعية 24/7...")
+print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد...")
 
 while True:
     usernames = generate_unique_usernames(batch_size)
-    print(f"\n--- جاري فحص دفعة جديدة ({batch_size} يوزر) ---")
     
     with ThreadPoolExecutor(max_workers=12) as executor:
         futures = {executor.submit(check_username, user): user for user in usernames}
         
         for future in as_completed(futures):
             user, is_available = future.result()
+            total_checked += 1
+            
             if is_available:
-                print(f"[-] فحص: {user} (مأخوذ)                                   🔥 [ متاح ومصيد! ] ➔  {user}")
-                # حفظ محلياً في Render
-                with open("found.txt", "a", encoding="utf-8") as f:
-                    f.write(user + "\n")
-                # إرسال إلى ديسكورد فوراً
-                send_discord_notification(user)
+                print(f"🔥 [ متاح ومصيد! ] ➔  {user}")
+                send_discord_message(f"🔥 **صيد جديد ومتاح!**\n`{user}`\n@everyone")
             else:
                 print(f"[-] فحص: {user} (مأخوذ)")
+
+    # إرسال إشعار في ديسكورد كل 2000 يوزر يفحصهم عشان تتأكد إنه شغال
+    if total_checked % 2000 == 0:
+        send_discord_message(f"⚙️ **تحديث حالة:** البوت شغال وتم فحص `{total_checked}` يوزر حتى الآن وما زال البحث مستمراً...")
 
     time.sleep(1.5)
