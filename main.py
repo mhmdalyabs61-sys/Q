@@ -8,12 +8,21 @@ from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 1. سيرفر ويب وهمي عشان Render يوافق يشغله مجاناً بدون فلوس
+# 1. سيرفر ويب وهمي محدث (يدعم GET و HEAD عشان يمنع خطأ 502 تماماً)
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write(b"Roblox Sniper is Running!")
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        pass  # منع امتلاء السجلات
 
 def run_web_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
@@ -24,7 +33,7 @@ t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. كود فحص روبلوكس (الصعد والسريع)
+# 2. كود فحص روبلوكس (الصيد السريع)
 API_URL = "https://auth.roblox.com/v1/usernames/validation"
 
 def check_username(username):
