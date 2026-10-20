@@ -28,7 +28,7 @@ def run_web_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
     server.serve_forever()
 
-# تشغيل السيرفر في الخلفية
+# تشغيل سيرفر الويب في الخلفية
 t = Thread(target=run_web_server)
 t.daemon = True
 t.start()
@@ -49,8 +49,6 @@ def check_username(username):
     
     try:
         with urllib.request.urlopen(req, timeout=3) as response:
-            if response.status, == 200: # type: ignore
-                pass
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 if data.get('code') == 0:
@@ -81,7 +79,6 @@ while True:
         for future in as_completed(futures):
             user, is_available = future.result()
             if is_available:
-                # اليوزر المتاح ينطبع منفصل وواضح على اليمين بعيد عن الفحص العادي
                 print(f"[-] فحص: {user} (مأخوذ)                                   🔥 [ متاح ومصيد! ] ➔  {user}")
                 with open("found.txt", "a", encoding="utf-8") as f:
                     f.write(user + "\n")
