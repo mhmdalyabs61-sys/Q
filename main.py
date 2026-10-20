@@ -1,4 +1,4 @@
-import json
+جimport json
 import random
 import string
 import time
@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Ultra-Smart Sniper is Running!")
+        self.wfile.write(b"Roblox Beast Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -55,53 +55,46 @@ def check_username(username):
     except Exception:
         return username, False, "خطأ اتصال"
 
-def generate_ultra_smart_usernames(count):
-    # مقاطع لغوية وتقنية حديثة وقصيرة جداً (تطلع أسامي فخمة ونادرة)
-    roots = ["syn", "flux", "xyn", "vyn", "kox", "zex", "nex", "rix", "vex", "zix", "ion", "lux", "nox", "dex", "kyn", "ryn", "nyx", "aux"]
-    modifiers = ["ai", "ix", "ox", "ex", "ed", "un", "ov", "az", "uz"]
+def generate_beast_usernames(count):
+    # حروف علة وصوامت وحروف نادرة لدمج هجين يولد أسامي جديدة كلياً
+    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    rare_chars = ['q', 'x', 'z', '1', '7', '9']
     
     unique_set = set()
     
     while len(unique_set) < count:
-        pattern = random.choice([1, 2, 3, 4, 5])
+        choice = random.choice([1, 2, 3])
         
-        if pattern == 1:
-            # دمج جذور تقنية مع حروف علة ذكية (خماسي فخم)
-            uname = random.choice(roots) + random.choice(['y', 'i', 'o', 'x'])
-        elif pattern == 2:
-            # رباعي بتنسيق صوتي حديث (صامت + علة + صامت + حرف نادر)
-            c1 = random.choice(['s', 'v', 'k', 'z', 'm', 'r', 'n', 'f', 't', 'd'])
-            v1 = random.choice(['a', 'e', 'i', 'o', 'u'])
-            c2 = random.choice(['x', 'q', 'z', 'k', 'v', 'n'])
-            end_c = random.choice(string.ascii_lowercase)
-            uname = c1 + v1 + c2 + end_c
-        elif pattern == 3:
-            # ثلاثي فخم مضاف له حرف خفيف بالبداية والنهاية (خماسي)
-            uname = random.choice(string.ascii_lowercase) + "".join(random.choices(string.ascii_lowercase, k=3)) + random.choice(string.ascii_lowercase)
-        elif pattern == 4:
-            # مقطع حديث مع رقم مميز ونظيف
-            uname = random.choice(roots)[:3] + random.choice(['1', '7', '9', 'x', 'z'])
+        if choice == 1:
+            # رباعي هجين (صامت + علة + صامت + حرف نادر)
+            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + random.choice(rare_chars)
+        elif choice == 2:
+            # خماسي هجين (مقطع صوتي + حرفين عشوائيين نظيفين)
+            uname = random.choice(consonants) + random.choice(vowels) + random.choice(consonants) + "".join(random.choices(string.ascii_lowercase, k=2))
         else:
-            # دمج مقطعين قصيرين جداً (رباعي أو خماسي)
-            uname = random.choice(roots)[:2] + random.choice(modifiers)
+            # رباعي أو خماسي بحروف متسلسلة خفيفة
+            length = random.choice([4, 5])
+            uname = "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
             
         uname = uname.lower().strip()
-        # شروط نظافة روبلوكس الأساسية
+        
+        # شروط النظافة الأساسية لروبلوكس
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
             if len(uname) in [4, 5]:
                 unique_set.add(uname)
                 
     return list(unique_set)
 
-send_discord_message("🧠 **تم تفعيل وضع (الذكاء الخارق والصيد المخفي)!** البوت يبحث بطرق لا تتوقعها...")
-print("[*] البوت شغال بنظام التوليد الذكي والمتقدم جداً...")
+send_discord_message("🚀 **تم إطلاق وضع (Beast Sniper المهووس)!** بدأ طحن اليوزرات الحقيقية...")
+print("[*] البوت شغال الآن بالطريقة الهجينة الجديدة...")
 
 total_checked = 0
 
 while True:
-    batch_usernames = generate_ultra_smart_usernames(60)
+    batch_usernames = generate_beast_usernames(80) # ضخ 80 يوزر بكل دفعة
     
-    with ThreadPoolExecutor(max_workers=12) as executor:
+    with ThreadPoolExecutor(max_workers=15) as executor: # رفع السرعة إلى 15 مسار
         future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
         
         for future in as_completed(future_to_user):
@@ -113,11 +106,11 @@ while True:
             print(f"[{total_checked}] ({size_type}) يوزر: {user_name} ➔ الحالة: {details}")
             
             if is_available:
-                print(f"🔥 [ صيدة تاريخية ونظيفة! ] ({size_type}) ➔ {user_name}")
+                print(f"🔥 [ صيدة حقيقية نارية! ] ({size_type}) ➔ {user_name}")
                 send_discord_message(f"🔥 **صيد أسطوري ومتاح حقيقةً!**\n نوعه: **{size_type}**\n اليوزر: `{user_name}`\n@everyone")
 
-    if total_checked >= 180:
-        send_discord_message(f"📊 **تقرير ذكي:** تم فحص `{total_checked}` يوزر بنجاح... البوت مستمر بالبحث 🚀")
+    if total_checked >= 200:
+        send_discord_message(f"📊 **تقرير أداء:** تم فحص `{total_checked}` يوزر بنجاح... مستمرين بالبحث ⚡")
         total_checked = 0
 
-    time.sleep(0.8)
+    time.sleep(0.5)
