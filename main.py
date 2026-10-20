@@ -66,14 +66,15 @@ def generate_unique_usernames(count):
             unique_set.add(uname)
     return list(unique_set)
 
-batch_size = 30
+# الإعدادات الآمنة والسرعة الموزونة
+batch_size = 50 
 print("[*] تم تشغيل البوت والسيرفر بنجاح، جاري بدء الصيد...")
 
 while True:
     usernames = generate_unique_usernames(batch_size)
     print(f"\n--- جاري فحص دفعة جديدة ({batch_size} يوزر) ---")
     
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         futures = {executor.submit(check_username, user): user for user in usernames}
         
         for future in as_completed(futures):
@@ -85,4 +86,4 @@ while True:
             else:
                 print(f"[-] فحص: {user} (مأخوذ)")
 
-    time.sleep(1)
+    time.sleep(1.5)
