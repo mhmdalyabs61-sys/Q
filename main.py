@@ -13,7 +13,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Roblox Pure Random Sniper is Running!")
+        self.wfile.write(b"Roblox Proxy Sniper is Running!")
 
     def log_message(self, format, *args):
         pass
@@ -31,9 +31,21 @@ DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1562019919128698990/doPV
 
 def send_discord_message(msg):
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json={"content": msg}, timeout=5)
+        requests.post(DISCORD_WEBHOOK_URL, json={"content": msg}, timeout=3)
     except Exception:
         pass
+
+# قائمة بروكسيات (يمكنك استبدالها بروكسيات حقيقية ونظيفة لضمان أفضل نتيجة)
+PROXIES_LIST = [
+    # أمثلة: "http://IP:Port",
+    # إذا لم تتوفر بروكسيات، سيعمل الكود بدونها ولكن قد يعود لحالة الحظر
+]
+
+def get_random_proxy():
+    if not PROXIES_LIST:
+        return None
+    proxy = random.choice(PROXIES_LIST)
+    return {"http": proxy, "https": proxy}
 
 def check_username(username):
     url = f"https://auth.roblox.com/v1/usernames/validation?request.username={username}&request.birthday=2000-01-01"
@@ -43,80 +55,64 @@ def check_username(username):
         'Referer': 'https://www.roblox.com/'
     }
     
+    proxy = get_random_proxy()
+    
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        # إرسال الطلب مع البروكسي إن وجد لتجنب الحظر
+        response = requests.get(url, headers=headers, proxies=proxy, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            return username, True, data.get("code"), data
-        else:
-            return username, False, response.status_code, response.text
-    except Exception as e:
-        return username, False, 500, str(e)
+            return username, True, data.get("code")
+        return username, False, response.status_code
+    except Exception:
+        return username, False, 500
 
 checked_history = set()
 
-def generate_pure_random_batch(count=40):
-    # الحروف والأرقام والشرطة المتاحة في روبلوكس
+def generate_batch(count=50):
     chars_pool = string.ascii_lowercase + string.digits + "_"
     batch = set()
     attempts = 0
     
-    while len(batch) < count and attempts < count * 15:
+    while len(batch) < count and attempts < count * 5:
         attempts += 1
-        length = random.choice([4, 5]) # رباعي أو خماسي فقط
-        
-        # توليد عشوائي بحت
+        length = random.choice([4, 5])
         uname = "".join(random.choices(chars_pool, k=length))
-        uname = uname.lower().strip()
         
-        # شروط روبلوكس الأساسية جداً (لا تبدأ أو تنتهي بشرطة، ولا تكرر الشرطات وراء بعض)
         if not uname.startswith("_") and not uname.endswith("_") and "__" not in uname:
-            if len(uname) in [4, 5]:
-                if uname not in checked_history:
-                    checked_history.add(uname)
-                    batch.add(uname)
-                    
+            if uname not in checked_history:
+                checked_history.add(uname)
+                batch.add(uname)
+                
     return list(batch)
 
-send_discord_message("🎲 **تم تفعيل العشوائية البحتة (أي رباعي أو خماسي)!** البوت انطلق...")
-print("[*] البوت شغال عشوائي بحت...")
+send_discord_message("🛡️ **تم تفعيل السنايبر مع نظام تجاوز الحظر والبروكسيات!**")
+print("[*] السنايبر يعمل الآن مع نظام حماية الاتصال...")
 
 batch_counter = 0
 
 while True:
-    batch_usernames = generate_pure_random_batch(40)
+    batch_usernames = generate_batch(50)
     if not batch_usernames:
-        time.sleep(1)
         continue
         
     batch_counter += 1
-    start_msg = f"🔄 **لفة عشوائية ({batch_counter}):** جاري فحص `{len(batch_usernames)}` يوزر (رباعي/خماسي)..."
-    print(start_msg)
-    send_discord_message(start_msg)
-    
-    hits_in_batch = 0
+    print(f"⚡ [لفة {batch_counter}] جاري فحص 50 يوزر...")
     
     with ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_user = {executor.submit(check_username, user): user for user in batch_usernames}
+        futures = {executor.submit(check_username, user): user for user in batch_usernames}
         
-        for future in as_completed(future_to_user):
-            username, success, code, raw_data = future.result()
+        for future in as_completed(futures):
+            username, success, code = future.result()
             size_type = "رباعي 💎" if len(username) == 4 else "خماسي 🌟"
             
             if success:
-                print(f"فحص ({size_type}) ➔ {username} | كود: {code}")
-                # الصيد الحقيقي المتاح
+                print(f"فحص: {username} | كود: {code}")
                 if code == 0:
-                    hits_in_batch += 1
-                    hit_msg = f"🔥 **صيد أسطوري متاح حقيقةً!**\n النوع: **{size_type}**\n اليوزر: `{username}`\n@everyone"
-                    print(f"🔥 [ صيدة كبرى! ] ➔ {username}")
+                    hit_msg = f"🔥 **صيد أسطوري متاح!**\n النوع: **{size_type}**\n اليوزر: `{username}`\n@everyone"
+                    print(f"🔥 صيدة نارية: {username}")
                     send_discord_message(hit_msg)
             else:
-                print(f"خطأ اتصال لـ {username}")
-
-    if hits_in_batch == 0:
-        print(f"📊 انتهت اللفة ({batch_counter})، جاري الانتقال للفة اللي بعدها...")
-    else:
-        print(f"✅ انتهت اللفة ({batch_counter}) وتم صيد {hits_in_batch} يوزر!")
+                print(f"خطأ اتصال أو حظر لـ {username}")
 
     time.sleep(1)
